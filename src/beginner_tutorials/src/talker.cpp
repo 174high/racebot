@@ -45,7 +45,18 @@ int sockfd;
 std::vector<car_info*> train_car_seq;
 std::vector<std::vector<car_info*> > train_car_info;   
  
- 
+
+struct car_ps_info
+{
+	bool real_data; 
+	long long time_nsecs; 
+	float speed; 
+	float position; 
+
+};
+
+std::vector<car_ps_info> train_ps_one_chain ;  
+std::vector<std::vector<car_ps_info> > train_ps_all_chain;  
 
 //ros::init(argc, argv, "talker");
 //ros::Rate loop_rate(10);
@@ -158,6 +169,17 @@ void control_car(int & command)
                         speed_pub.publish(msg_s);
 
                         position_pub.publish(msg_p);
+
+			if(is_training_mode==true)
+                        {
+		   		car_ps_info one_ps_info;
+                        	one_ps_info.real_data=true;
+                        	one_ps_info.speed=msg_s->data;
+                        	one_ps_info.position=msg_p->data;
+                        	train_ps_one_chain.push_back(one_ps_info);
+
+                        }
+
                 }
 
  		command=0; 
@@ -203,6 +225,27 @@ void get_beginning_info(void)
         beginning_secs=current_secs; 
         beginning_nsecs=current_nsecs; 
 }
+
+void test_train_data(void)
+{
+	std::cout<<"train_ps_one chain size="<<train_ps_one_chain.size()<<std::endl ;
+
+        std::vector<car_ps_info >::iterator it;
+
+       	for(it=train_ps_one_chain.begin();it!=train_ps_one_chain.end();it++)
+        {
+                if((*it).real_data==true)
+		{
+      			ros::Duration(0.1).sleep();
+         		msg_s->data=(*it).speed ;
+                	msg_p->data=(*it).position ;
+                        speed_pub.publish(msg_s);
+                        position_pub.publish(msg_p);
+			std::cout<<" publish !!"<<std::endl ;
+		}
+ 	}
+
+} 
 
 
 void testing_car(void)
@@ -298,6 +341,32 @@ void distanceCallback(const nav_msgs::OdometryConstPtr &msg)
 
 }
 
+
+void timerCallback(const ros::TimerEvent &event)
+{
+        static  unsigned int last_seq=0; 
+        if(is_training_mode==true)
+        {
+        	if(last_seq==train_ps_one_chain.size())
+        	{
+        		std::cout<<"s: how many train ps now ="<<train_ps_one_chain.size()<<std::endl; 
+			car_ps_info one_ps_info; 
+        		one_ps_info.real_data=false; 
+        		one_ps_info.speed=0;   
+        		one_ps_info.position=0;
+			train_ps_one_chain.push_back(one_ps_info);
+        		std::cout<<"e: how many train ps now ="<<train_ps_one_chain.size()<<std::endl;
+        	}
+ 	} 
+        else
+        {
+		last_seq=0;
+        }
+
+        last_seq=train_ps_one_chain.size(); 
+}
+
+
 int main(int argc, char **argv)  
 {  
         int reuse = 1;
@@ -315,6 +384,7 @@ int main(int argc, char **argv)
         position_pub = n.advertise<std_msgs::Float64>("/vesc/commands/servo/position", 10);
         distance_sub = n.subscribe("/odom", 1, distanceCallback);        
 
+	ros::Timer timer = n.createTimer(ros::Duration(0.1), timerCallback);
 
         struct sockaddr_in server_sockaddr,client_sockaddr;
         socklen_t sin_size ;
@@ -467,16 +537,22 @@ int main(int argc, char **argv)
                         train_car_info.push_back(train_car_seq); 
                         train_car_seq.clear(); 
                         std::cout<<"how many times we trained "<<train_car_info.size()<<std::endl;
+
+			train_ps_all_chain.push_back(train_ps_one_chain);
+			train_ps_one_chain.clear();
                 }
                 else
                 {
                         if(is_training_mode==true)
                         {
-                        	training_car(command);
+                        	//training_car(command);
+				control_car(command);
                         }
                         else if(is_testing_mode==true)                        
                         {
-				testing_car();
+				
+		//		testing_car();
+		           	test_train_data();
 			}
                         else
                         { 
