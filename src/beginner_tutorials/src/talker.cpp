@@ -32,6 +32,7 @@
 #define turn_right    106
 
 #define kill_car      37
+#define stop_car      25
 
 int main(int argc, char **argv)  
 {  
@@ -181,6 +182,11 @@ int main(int argc, char **argv)
 
 		ROS_INFO("%g", msg_s->data);  
         	ROS_INFO("%g", msg_p->data);  
+
+                if(command==stop_car)
+                {
+                	msg_s->data=0;
+                }
 
 		/** 
 	 	* The publish() function is how you send messages. The parameter 
