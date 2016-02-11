@@ -83,66 +83,71 @@ int main(int argc,char** argv)
 
                 if(t.type==1)
                 {
-                printf("key %i state %i \n",t.code,t.value);
+		        printf("key %i state %i \n",t.code,t.value);
 
-                if((run_forward==t.code)&&(botton_status_on==t.value))
-                {
-                        t.code=0;
-                        char buf[MAXDATASIZE]="forward";
-                	if(send(sockfd,buf,strlen(buf),0)== -1)
-              		{
-             	        	perror("send");
-             		        exit(1);
-             		}
+		        if((run_forward==t.code)&&(botton_status_on==t.value))
+		        {
+		                char buf[MAXDATASIZE]={0};
+		                sprintf(buf,"command:%d",t.code);
+		        	if(send(sockfd,buf,strlen(buf),0)== -1)
+		      		{
+		     	        	perror("send");
+		     		        exit(1);
+		     		}
 
-                        printf("send forward\n");
-                }
-                else if((run_backward==t.code)&&(botton_status_on==t.value))                                             {      
-                        
-                        char buf[MAXDATASIZE]="backward";
-                        if(send(sockfd,buf,strlen(buf),0)== -1)
-                        {
-                                perror("send");
-                                exit(1);
-                        }
+		                printf("send forward\n");
+		        }
+		        else if((run_backward==t.code)&&(botton_status_on==t.value))                                             {      
+		                
+		                char buf[MAXDATASIZE]={0};
+		                sprintf(buf,"command:%d",t.code);
+		                if(send(sockfd,buf,strlen(buf),0)== -1)
+		                {
+		                        perror("send");
+		                        exit(1);
+		                }
 
-                        printf("send backward\n");
+		                printf("send backward\n");
 
-                }
-                else if((turn_left==t.code)&&(botton_status_on==t.value))                                                {
-                      char buf[MAXDATASIZE]="turn_left";
-                        if(send(sockfd,buf,strlen(buf),0)== -1)
-                        {
-                                perror("send");
-                                exit(1);
-                        }
+		        }
+		        else if((turn_left==t.code)&&(botton_status_on==t.value))                                                {
+	  
+		                char buf[MAXDATASIZE]={0};
+		                sprintf(buf,"command:%d",t.code);
+		                if(send(sockfd,buf,strlen(buf),0)== -1)
+		                {
+		                        perror("send");
+		                        exit(1);
+		                }
 
-                        printf("send turn left \n");
-                }
-                else if((turn_right==t.code)&&(botton_status_on==t.value))                                               {
-                        char buf[MAXDATASIZE]="turn_right";
-                        if(send(sockfd,buf,strlen(buf),0)== -1)
-                        {
-                                perror("send");
-                                exit(1);
-                        }
+		                printf("send turn left \n");
+		        }
+		        else if((turn_right==t.code)&&(botton_status_on==t.value))                                               {
 
-                        printf("send turn right \n");
+		                char buf[MAXDATASIZE]={0};
+		                sprintf(buf,"command:%d",t.code);
+		                if(send(sockfd,buf,strlen(buf),0)== -1)
+		                {
+		                        perror("send");
+		                        exit(1);
+		                }
 
-                }
-                else if((((t.code>=speed_level_1)&&(t.code<=speed_level_10))&&(botton_status_on==t.value)))
-                {
-                        printf("speed %d \n",t.code);      
-                        char buf[MAXDATASIZE]={0} ;
-                        sprintf(buf,"speed:%d",t.code);
-                        if(send(sockfd,buf,strlen(buf),0)== -1)
-                        {
-                                perror("send");
-                                exit(1);
-                        }
+		                printf("send turn right \n");
 
-                        printf("send speed %d \n",t.code);
-                }
+		        }
+		        else if((((t.code>=speed_level_1)&&(t.code<=speed_level_10))&&(botton_status_on==t.value)))
+		        {
+		                printf("speed %d \n",t.code);      
+		                char buf[MAXDATASIZE]={0} ;
+		                sprintf(buf,"%d",t.code);
+		                if(send(sockfd,buf,strlen(buf),0)== -1)
+		                {
+		                        perror("send");
+		                        exit(1);
+		                }
+
+		                printf("send speed %d \n",t.code);
+		        }
                 }
 
     	}
