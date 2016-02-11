@@ -31,12 +31,14 @@
 #define turn_left     105   
 #define turn_right    106
 
+#define kill_car      37
+
 int main(int argc, char **argv)  
 {  
         int command=0;         
         int direction=0;
         float position=0.43;
-        int reuse = 0;
+        int reuse = 1;
 
 	ros::init(argc, argv, "talker");  
 
@@ -139,10 +141,12 @@ int main(int argc, char **argv)
             
                 if(command==run_forward)
                 {
+                    position=0.43; 
                     direction=1; 
                 }
                 else if(command==run_backward)
                 { 
+                    position=0.43;
                     direction=-1; 
                 } 
                   
@@ -162,6 +166,12 @@ int main(int argc, char **argv)
                       ROS_INFO("command=%d",command);
                       msg_s->data=(1000+(2250/10)*command); 
 
+                }
+
+                if(command==kill_car)
+                {
+                	close(sockfd);
+                        exit(1);
                 }
 
                 if(msg_s->data*direction<0)
