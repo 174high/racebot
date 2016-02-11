@@ -34,6 +34,10 @@
 #define kill_car      37
 #define stop_car      25
 
+#define train_car    44
+#define test_car     50
+#define stop_do      0xff 
+
 int main(int argc, char **argv)  
 {  
         int command=0;         
@@ -64,7 +68,6 @@ int main(int argc, char **argv)
         int recvbytes;
         int sockfd,client_fd;
         char buf[MAXDATASIZE]={0};
-        //œšÁ¢socketÁ¬œÓ
                           //IPV4 xieyi
         if((sockfd = socket(AF_INET,SOCK_STREAM,0))== -1)
         {
@@ -79,28 +82,24 @@ int main(int argc, char **argv)
        }
 
         printf("socket success!,sockfd=%d\n",sockfd);
-        //ÉèÖÃsockaddr_in œá¹¹ÌåÖÐÏà¹Ø²ÎÊý
         server_sockaddr.sin_family=AF_INET;
                                        //duankou
         server_sockaddr.sin_port=htons(SERVPORT);
         server_sockaddr.sin_addr.s_addr=INADDR_ANY;
         bzero(&(server_sockaddr.sin_zero),8);
 
-        //°ó¶šº¯Êýbind
         if(bind(sockfd,(struct sockaddr *)&server_sockaddr,sizeof(struct
         sockaddr))== -1){
                 perror("bind");
                 exit(1);
         }
         printf("bind success!\n");
-        //µ÷ÓÃlistenº¯Êý
         if(listen(sockfd,BACKLOG)== -1){
                 perror("listen");
                 exit(1);
         }
 
         printf("listening....\n");
-        //µ÷ÓÃacceptº¯Êý£¬µÈŽý¿Í»§¶ËµÄÁ¬œÓ
 
         //memset(&client_sockaddr, 0, sizeof(struct sockaddr_in));
 
@@ -149,32 +148,38 @@ int main(int argc, char **argv)
                 { 
                     position=0.43;
                     direction=-1; 
-                } 
-                  
-               if(command==turn_right)
+                }                   
+                else  if(command==turn_right)
                 {
                     if(position<=0.8)
                     position+=0.15;
-                }
+                    }
                 else if(command==turn_left)
                 {
                     if(position>=0.1)
                     position-=0.15;
                 }              
-
-                if((command>=speed_level_1)&&(command<=speed_level_10))
+                else if((command>=speed_level_1)&&(command<=speed_level_10))
                 {
                       ROS_INFO("command=%d",command);
                       msg_s->data=(1000+(2250/10)*command); 
 
                 }
-
-                if(command==kill_car)
+                else if(command==kill_car)
                 {
                 	close(sockfd);
                         exit(1);
                 }
+                else if(command==train_car)
+                {
+                
+                }
+                else if(command==test_car)
+                {
 
+
+                }
+  
                 if(msg_s->data*direction<0)
                 msg_s->data=msg_s->data*-1;                
 
