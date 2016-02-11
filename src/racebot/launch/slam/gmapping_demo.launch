@@ -1,0 +1,11 @@
+<launch>
+
+
+
+<!--<include file="$(find racebot)/launch/sensors/rplidar.launch"/>-->
+<include file="$(find racebot)/launch/includes/rplidar_gmapping.launch.xml"/>
+
+<!-- Move base -->
+<include file="$(find racebot)/launch/includes/move_base.dwa.launch.xml"/>
+
+</launch>

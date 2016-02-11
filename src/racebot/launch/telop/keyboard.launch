@@ -1,0 +1,4 @@
+<launch>
+  <node name="cmd_to_ack" pkg="racebot"  type="cmd_to_ack.py" output="screen" />
+</launch>
+

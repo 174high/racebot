@@ -1,0 +1,15 @@
+<launch>
+
+<include file="$(find racebot)/launch/sensors/rplidar.launch"/>
+
+<!-- known map server -->
+<arg name="map" default="/home/ubuntu/map/office-hector.yaml" />
+<node name="map_server" pkg="map_server" type="map_server" args="$(arg map)" />
+
+<include file="$(find racebot)/launch/includes/amcl_demo.launch.xml" />
+
+<!-- Move base -->
+<include file="$(find racebot)/launch/includes/move_base.teb.launch.xml"/>
+  
+
+</launch>

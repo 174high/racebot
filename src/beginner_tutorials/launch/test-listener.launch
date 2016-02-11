@@ -1,0 +1,11 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+
+  <arg name="node_name" default="listener" />
+
+  <!-- listener node -->
+  <node pkg="beginner_tutorials" type="listener" name="$(arg node_name)" output="screen">
+  </node>
+
+
+</launch>

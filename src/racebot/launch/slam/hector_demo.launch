@@ -1,0 +1,11 @@
+<launch>
+
+<arg name="planner_method" default="teb" />
+
+<!--<include file="$(find racebot)/launch/sensors/rplidar.launch"/>-->
+<include file="$(find racebot)/launch/includes/rplidar_hector_mapping.launch.xml"/>
+
+<!-- Move base -->
+<include file="$(find racebot)/launch/includes/move_base.$(arg planner_method).launch.xml"/>
+
+</launch>
