@@ -531,6 +531,7 @@ void scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
 }
 
 
+
 int main(int argc, char **argv)  
 {  
         int reuse = 1;
@@ -546,9 +547,8 @@ int main(int argc, char **argv)
 
 	speed_pub = n.advertise<std_msgs::Float64>("/vesc/commands/motor/speed", 10);  
         position_pub = n.advertise<std_msgs::Float64>("/vesc/commands/servo/position", 10);
-        distance_sub = n.subscribe("/odom", 1, distanceCallback);        
+//        distance_sub = n.subscribe("/odom", 1, distanceCallback);        
         scan_sub = n.subscribe<sensor_msgs::LaserScan>("/scan", 1000, scanCallback);
-
 	ros::Timer timer = n.createTimer(ros::Duration(0.1), timerCallback);
 
         struct sockaddr_in server_sockaddr,client_sockaddr;
@@ -638,7 +638,7 @@ int main(int argc, char **argv)
            // 		continue;
         	}
 
-           //     printf("test0\n");
+  //              printf("test0\n");
 
                 memset(buf,0,sizeof(buf));
               
