@@ -42,7 +42,9 @@
 
 int sockfd;
 
-std::vector<car_info*> train_car_seq; 
+std::vector<car_info*> train_car_seq;
+std::vector<std::vector<car_info*> > train_car_info;   
+ 
  
 
 //ros::init(argc, argv, "talker");
@@ -65,11 +67,11 @@ float position=0.43;
 float beginning_distance=0;
 float beginning_speed=0;
 long long beginning_seq=0;
-long long beginning_secs=0;
-long long beginning_nsecs=0; 
+long long   beginning_secs=0;
+long long   beginning_nsecs=0; 
 
-long long train_beginning_secs=0;
-long long train_beginning_nsecs=0; 
+long long   train_beginning_secs=0;
+long long  train_beginning_nsecs=0; 
 
 ros::Time beginning_stampp ;
 
@@ -77,8 +79,8 @@ ros::Time beginning_stampp ;
 float current_speed=0; 
 float current_distance=0; 
 long long current_seq=0;
-long long current_secs=0;
-long long current_nsecs=0; 
+long  current_secs=0;
+long  current_nsecs=0; 
 ros::Time current_stamp; 
 
 bool is_training_mode=false ; 
@@ -158,8 +160,7 @@ void control_car(int & command)
                         position_pub.publish(msg_p);
                 }
 
-                command=0;
-
+ 		command=0; 
                // ros::spinOnce();
 
                 //loop_rate.sleep();
@@ -206,7 +207,8 @@ void get_beginning_info(void)
 
 void testing_car(void)
 {
-        long long  duration=0;
+        long long   duration=0;
+        int command=0; 
 
  	std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
         ros::spinOnce();
@@ -231,14 +233,19 @@ void testing_car(void)
         	std::cout<<"command="<<(*it)->cmd<<std::endl;   
                 std::cout<<" "<<std::endl; 
 
-                duration=(*it)->secs-train_beginning_secs ;
+                duration=(*it)->nsecs-train_beginning_nsecs ;
 
-                while(current_secs-beginning_secs<duration)
-                          ros::spinOnce();
-  
-                control_car((*it)->cmd);
+                std::cout<<"duration="<<duration<<std::endl; 
+  		std::cout<<"current_nsecs-beginning_nsecs="<<(current_nsecs-beginning_nsecs)<<std::endl;
+
+                while(current_nsecs-beginning_nsecs<duration)
+                {
+                           ros::spinOnce();
+                }
+   
+                command=(*it)->cmd; 
+                control_car(command);
                 ros::spinOnce();
-
 
 
     	 }
@@ -455,16 +462,27 @@ int main(int argc, char **argv)
                 	is_training_mode=false;
                         is_testing_mode= false;
                         std::cout<<"stop all mode!!!"<<std::endl; 
+                        std::cout<<"############ store data of training   ##########################"<<std::endl; 
+		        std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
+                        train_car_info.push_back(train_car_seq); 
+                        train_car_seq.clear(); 
+                        std::cout<<"how many times we trained "<<train_car_info.size()<<std::endl;
                 }
                 else
                 {
                         if(is_training_mode==true)
-                        training_car(command);
+                        {
+                        	training_car(command);
+                        }
                         else if(is_testing_mode==true)                        
-                        testing_car();
-                        else 
-                //        smooth_control(command);
-                     	control_car(command);
+                        {
+				testing_car();
+			}
+                        else
+                        { 
+                	//      smooth_control(command);
+                     		control_car(command);
+			}
                 }
 
 	}  
