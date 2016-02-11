@@ -1,6 +1,7 @@
 #include "ros/ros.h"  
 #include "std_msgs/String.h"  
 #include  <std_msgs/Float64.h>
+#include <nav_msgs/Odometry.h>
 
 #include <sstream>  
 
@@ -45,9 +46,11 @@ int sockfd;
 
 std_msgs::Float64::Ptr  msg_s(new std_msgs::Float64);
 std_msgs::Float64::Ptr  msg_p(new std_msgs::Float64);
+nav_msgs::Odometry      distance; 
 
-ros::Publisher speed_pub ;
-ros::Publisher position_pub;
+ros::Publisher   speed_pub ;
+ros::Publisher   position_pub;
+ros::Subscriber  distance_sub;
 
 char buf[MAXDATASIZE]={0};
 
@@ -143,6 +146,15 @@ void control_car(int & command)
 }
 
 
+void distanceCallback(const nav_msgs::OdometryConstPtr &msg)
+{
+	distance=*msg; 
+        std::cout<<" get odom data!!!"<<std::endl; 
+        std::cout<<" distance x="<<distance.pose.pose.position.x<<std::endl ;  
+        std::cout<<" speed= "<<distance.twist.twist.linear.x<<std::endl ;
+
+}
+
 int main(int argc, char **argv)  
 {  
         int reuse = 1;
@@ -157,6 +169,8 @@ int main(int argc, char **argv)
 
 	speed_pub = n.advertise<std_msgs::Float64>("/vesc/commands/motor/speed", 10);  
         position_pub = n.advertise<std_msgs::Float64>("/vesc/commands/servo/position", 10);
+        distance_sub = n.subscribe("/odom", 1, distanceCallback);        
+
 
         struct sockaddr_in server_sockaddr,client_sockaddr;
         socklen_t sin_size ;
