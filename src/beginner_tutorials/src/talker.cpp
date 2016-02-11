@@ -63,6 +63,8 @@ struct car_ps_info
 std::vector<car_ps_info> train_ps_one_chain ;  
 std::vector<std::vector<car_ps_info> > train_ps_all_chain;  
 
+struct car_ps_info  (*train_ps_array_one)[1000]; 
+
 //ros::init(argc, argv, "talker");
 //ros::Rate loop_rate(10);
 
@@ -104,26 +106,8 @@ bool is_testing_mode=false;
 
 std::ofstream outFile; 
 
-void store_data(void)
+void store_data(char * action_name,bool overlap)
 {	
-		for(int i=0;i<5;i++)
-		{  
-           		std::cout<<"s: how many train ps now ="<<train_ps_one_chain.size()<<std::endl;
-                	car_ps_info one_ps_info;
-                	one_ps_info.real_data=false;
-                	one_ps_info.speed=0;
-                	one_ps_info.position=0;
-                	train_ps_one_chain.push_back(one_ps_info);
-                	std::cout<<"e: how many train ps now ="<<train_ps_one_chain.size()<<std::endl;
-		}
-
-/*
-
- 	       car_ps_info one_ps_info;
-               one_ps_info.real_data=false;
-               one_ps_info.speed=900;
-               one_ps_info.position=0.5;
-*/
 
                  /* 1: create the database handle */
                 Db db (0, 0);
@@ -132,44 +116,72 @@ void store_data(void)
                 db.open (NULL, "./apollo_db", NULL, DB_BTREE, DB_CREATE, 0644);
 
                 /* 3: create the key and value Dbts */
-                char *first_key = "test 1";
+                char *first_key = action_name;
                 u_int32_t key_len = (u_int32_t) strlen (first_key);
 
+//		struct car_ps_info  (*first_value)[1000]=&train_ps_array_one[0];
+//                u_int32_t value_len= (u_int32_t)sizeof(car_ps_info)*1000;
 
-                //car_ps_info* first_value=&one_ps_info; 
-                //u_int32_t value_len= (u_int32_t)sizeof(one_ps_info);
-//                char * first_value = "Hello World - Berkeley DB style!!";		
-//                u_int32_t value_len = (u_int32_t) strlen (first_value);
-		std::vector<car_ps_info> * first_value=&train_ps_one_chain;
-                u_int32_t value_len= (u_int32_t)sizeof(train_ps_one_chain);
+		struct car_ps_info test; 
+		test.position=0.5;
+		test.speed=1000; 
+		struct car_ps_info *first_value=&test;
+		u_int32_t value_len= (u_int32_t)sizeof(car_ps_info);
 
+		std::cout<<"value_len="<<value_len<<std::endl; 
 
                 Dbt key (first_key, key_len + 1);
                 Dbt value (first_value, value_len + 1);
 
+     		/* 5: read the value stored earlier in a Dbt object */
+                Dbt stored_value;
+                int ret = db.get (0, &key, &stored_value, 0);
+
+		std::cout<<"store ret="<<ret<<std::endl; 
+
                 /* 4: insert the key-value pair into the database */
-                int ret;
                 ret = db.put (0, &key, &value, DB_NOOVERWRITE);
+
+		std::cout<<"here"<<std::endl; 
 
                 if (ret == DB_KEYEXIST)
                 {
-                    std::cout << "hello_world: " << first_key << " already exists in db" <<std::endl;
+                	std::cout << "warning!!: " << first_key << " already exists in db" <<std::endl;
                 }
-
-                /* 5: read the value stored earlier in a Dbt object */
-                Dbt stored_value;
-                ret = db.get (0, &key, &stored_value, 0);
-
-		std::cout<<" size="<<((std::vector<car_ps_info>*)(stored_value.get_data()))->size()<<std::endl; 
-
-//		std::cout<<"speed="<<((std::vector<car_ps_info>*)(stored_value.get_data()))<<std::endl; 
-//                std::cout<<"position="<<((std::vector<car_ps_info>*)(stored_value.get_data()))<<std::endl;
-
-                /* 6: print the value read from the database */
-               // std::cout << (char *) stored_value.get_data () << std::endl;
 
                 /* 7: close the database handle */
                 db.close (0);
+		//db.sync(0); 
+}
+
+void get_data(char * action_name)
+{
+                 
+                 /* 1: create the database handle */
+                 Db db (0, 0);
+                
+                /* 2: open the database using the handle */
+                db.open (NULL, "./apollo_db", NULL, DB_BTREE, DB_CREATE, 0644);
+                
+                /* 3: create the key and value Dbts */
+                char *first_key = action_name;
+                u_int32_t key_len = (u_int32_t) strlen (first_key);
+
+                Dbt key (first_key, key_len + 1); 
+
+                /* 5: read the value stored earlier in a Dbt object */
+                Dbt stored_value;
+                int ret = db.get (0, &key, &stored_value, 0);
+
+		std::cout<<"get db ret="<<ret<<std::endl; 
+
+		std::cout<<"####test datat#######"<<std::endl; 
+
+                std::cout<<"1:get data position="<<((struct car_ps_info*)(stored_value.get_data()))->position<<std::endl;
+                std::cout<<"1:get data speed="<<((struct car_ps_info*)(stored_value.get_data()))->speed<<std::endl;		
+
+                /* 7: close the database handle */
+                db.close(0);
 }
 
 
@@ -315,6 +327,8 @@ void test_train_data(void)
                 	msg_p->data=(*it).position ;
                         speed_pub.publish(msg_s);
                         position_pub.publish(msg_p);
+			std::cout<<"s="<<(*it).speed<<std::endl;  ;
+			std::cout<<"p="<<(*it).position<<std::endl ; 
 			std::cout<<" publish !!"<<std::endl ;
 		}
  	}
@@ -445,13 +459,6 @@ int main(int argc, char **argv)
 {  
         int reuse = 1;
 	int ret;
-
-//	Db db (0, 0);
-
-	outFile.open("/home/ubuntu/racecar-ws/data.csv",std::ios::out);
-	outFile << "name" << ',' << "age" << ',' << "hobby" << std::endl;
-	outFile.close();
-
 
 	ros::init(argc, argv, "talker");  
 
@@ -616,14 +623,15 @@ int main(int argc, char **argv)
                         std::cout<<"############ store data of training   ##########################"<<std::endl; 
 		        std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
 
-			store_data();
+			store_data("test 1",false);
+		//	get_data("test 1"); 
 	
                         train_car_info.push_back(train_car_seq); 
                         train_car_seq.clear(); 
                         std::cout<<"how many times we trained "<<train_car_info.size()<<std::endl;
 
 			train_ps_all_chain.push_back(train_ps_one_chain);
-			train_ps_one_chain.clear();
+			//train_ps_one_chain.clear();
                 }
                 else
                 {
@@ -634,7 +642,7 @@ int main(int argc, char **argv)
                         }
                         else if(is_testing_mode==true)                        
                         {
-				
+	                        get_data("test 1");				
 		//		testing_car();
 		           	test_train_data();
 			}
