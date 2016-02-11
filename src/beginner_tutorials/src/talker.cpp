@@ -379,9 +379,10 @@ void test_train_data(void)
 
        	for(it=train_ps_one_chain.begin();it!=train_ps_one_chain.end();it++)
         {
+	        ros::Duration(0.1).sleep();
                 if((*it).real_data==true)
 		{
-      			ros::Duration(0.1).sleep();
+      		//	ros::Duration(0.1).sleep();
          		msg_s->data=(*it).speed ;
                 	msg_p->data=(*it).position ;
                         speed_pub.publish(msg_s);
@@ -526,7 +527,7 @@ void scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
   
     for(int i = 0; i < count; i++) {
         float degree = RAD2DEG(scan->angle_min + scan->angle_increment * i);
-        ROS_INFO(": [%f, %f]", degree, scan->ranges[i]);
+//        ROS_INFO(": [%f, %f]", degree, scan->ranges[i]);
     }
 }
 
@@ -547,8 +548,8 @@ int main(int argc, char **argv)
 
 	speed_pub = n.advertise<std_msgs::Float64>("/vesc/commands/motor/speed", 10);  
         position_pub = n.advertise<std_msgs::Float64>("/vesc/commands/servo/position", 10);
-//        distance_sub = n.subscribe("/odom", 1, distanceCallback);        
-        scan_sub = n.subscribe<sensor_msgs::LaserScan>("/scan", 1000, scanCallback);
+        distance_sub = n.subscribe("/odom", 1, distanceCallback);        
+//        scan_sub = n.subscribe<sensor_msgs::LaserScan>("/scan", 1000, scanCallback);
 	ros::Timer timer = n.createTimer(ros::Duration(0.1), timerCallback);
 
         struct sockaddr_in server_sockaddr,client_sockaddr;
