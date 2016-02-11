@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 {  
         int command=0;         
         int direction=0;
-        float position=0.45;
+        float position=0.43;
         int reuse = 0;
 
 	ros::init(argc, argv, "talker");  
@@ -160,7 +160,7 @@ int main(int argc, char **argv)
                 if((command>=speed_level_1)&&(command<=speed_level_10))
                 {
                       ROS_INFO("command=%d",command);
-                      msg_s->data=(1000+(2300/10)*command); 
+                      msg_s->data=(1000+(2250/10)*command); 
 
                 }
 
@@ -181,7 +181,9 @@ int main(int argc, char **argv)
                 
                 if(command!=0)
                 {
+                        
 			speed_pub.publish(msg_s);  
+
         		position_pub.publish(msg_p);
                 } 
               
