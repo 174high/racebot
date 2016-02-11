@@ -4,6 +4,8 @@
 #include <nav_msgs/Odometry.h>
 #include "car_info.h"
 
+#include <iostream>
+#include <fstream>
 #include <sstream>  
 
 #include <stdio.h>
@@ -96,6 +98,10 @@ ros::Time current_stamp;
 
 bool is_training_mode=false ; 
 bool is_testing_mode=false; 
+
+std::ofstream outFile; 
+
+
 /**
 the control_car（）function is used to control  motion of car 
 command=run_forward is used to control the direction of car to move forward 
@@ -371,6 +377,11 @@ int main(int argc, char **argv)
 {  
         int reuse = 1;
 	int ret;
+
+	outFile.open("/home/ubuntu/racecar-ws/data.csv",std::ios::out);
+	outFile << "name" << ',' << "age" << ',' << "hobby" << std::endl;
+	outFile.close();
+
 
 	ros::init(argc, argv, "talker");  
 
