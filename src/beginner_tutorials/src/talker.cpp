@@ -4,6 +4,9 @@
 #include <nav_msgs/Odometry.h>
 #include "car_info.h"
 
+#include <db_cxx.h>
+#include <db.h>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>  
@@ -101,6 +104,44 @@ bool is_testing_mode=false;
 
 std::ofstream outFile; 
 
+void store_data(void)
+{	
+                 /* 1: create the database handle */
+                Db db (0, 0);
+
+                /* 2: open the database using the handle */
+                db.open (NULL, "./chap4_db", NULL, DB_BTREE, DB_CREATE, 0644);
+
+                /* 3: create the key and value Dbts */
+                char *first_key = "first_record";
+                u_int32_t key_len = (u_int32_t) strlen (first_key);
+
+                char * first_value = "Hello World - Berkeley DB style!!";
+                u_int32_t value_len = (u_int32_t) strlen (first_value);
+
+                Dbt key (first_key, key_len + 1);
+                Dbt value (first_value, value_len + 1);
+
+                /* 4: insert the key-value pair into the database */
+                int ret;
+                ret = db.put (0, &key, &value, DB_NOOVERWRITE);
+
+                if (ret == DB_KEYEXIST)
+                {
+                    std::cout << "hello_world: " << first_key << " already exists in db" <<std::endl;
+                }
+
+                /* 5: read the value stored earlier in a Dbt object */
+                Dbt stored_value;
+                ret = db.get (0, &key, &stored_value, 0);
+
+                /* 6: print the value read from the database */
+                std::cout << (char *) stored_value.get_data () << std::endl;
+
+                /* 7: close the database handle */
+                db.close (0);
+}
+
 
 /**
 the control_car（）function is used to control  motion of car 
@@ -115,8 +156,6 @@ command=speed_level_1~10 is used to control the speed of car
 
 void control_car(int & command)
 {
-
-
                if(command==run_forward)
                 {
                     position=0.43;
@@ -194,7 +233,6 @@ void control_car(int & command)
                 //loop_rate.sleep();
 
                 //memset(buf,0,sizeof(buf));
-
 }
 
 void training_car(int & command)
@@ -378,6 +416,8 @@ int main(int argc, char **argv)
         int reuse = 1;
 	int ret;
 
+//	Db db (0, 0);
+
 	outFile.open("/home/ubuntu/racecar-ws/data.csv",std::ios::out);
 	outFile << "name" << ',' << "age" << ',' << "hobby" << std::endl;
 	outFile.close();
@@ -545,6 +585,9 @@ int main(int argc, char **argv)
                         std::cout<<"stop all mode!!!"<<std::endl; 
                         std::cout<<"############ store data of training   ##########################"<<std::endl; 
 		        std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
+
+			store_data();
+	
                         train_car_info.push_back(train_car_seq); 
                         train_car_seq.clear(); 
                         std::cout<<"how many times we trained "<<train_car_info.size()<<std::endl;
