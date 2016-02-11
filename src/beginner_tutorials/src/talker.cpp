@@ -145,6 +145,44 @@ void control_car(int & command)
 
 }
 
+void training_car(int & command)
+{
+
+
+}
+
+void testing_car(int & command)
+{
+
+
+}
+
+void smooth_control(int &command)
+{
+       	float final_speed=0;  
+       	msg_s->data=0 ;
+
+        std::cout<<" smooth control !!!!!"<<std::endl; 
+
+       	if((command>=speed_level_1)&&(command<=speed_level_10))
+       	{
+                      ROS_INFO("command=%d",command);
+                      final_speed=(1000+(2250/10)*command);
+
+       	}
+
+        ROS_INFO("%g", final_speed);
+
+
+       	while(final_speed>msg_s->data)
+       	{
+       		msg_s->data+=300;
+                usleep(100000); 
+       		speed_pub.publish(msg_s);
+                ros::spinOnce();
+      	}
+
+}
 
 void distanceCallback(const nav_msgs::OdometryConstPtr &msg)
 {
@@ -158,6 +196,7 @@ void distanceCallback(const nav_msgs::OdometryConstPtr &msg)
 int main(int argc, char **argv)  
 {  
         int reuse = 1;
+	int ret;
 
 	ros::init(argc, argv, "talker");  
 
@@ -175,7 +214,7 @@ int main(int argc, char **argv)
         struct sockaddr_in server_sockaddr,client_sockaddr;
         socklen_t sin_size ;
         //socklen_t sin_size= sizeof(struct sockaddr);
-        int recvbytes;
+        int recvbytes=0;
         int client_fd;
         char buf[MAXDATASIZE]={0};
                           //IPV4 xieyi
@@ -216,53 +255,115 @@ int main(int argc, char **argv)
         sin_size = 1;
         printf("sin_size=%d\n",sin_size);
 
-       if((client_fd=accept(sockfd,(struct sockaddr *)&client_sockaddr,&sin_size))==-1)
-        {
-                perror("accept");
-                exit(1);
-        }
- 
+ //      if((client_fd=accept(sockfd,(struct sockaddr *)&client_sockaddr,&sin_size))==-1)
+ //       {
+ //               perror("accept");
+ //               exit(1);
+//        }
 
+       fd_set fdsr; 
+       int maxsock;
+
+       struct timeval tv;
+
+       maxsock = sockfd;
+
+        printf("yyyy \n");
         while (ros::ok())
         {
+
+               	// initialize file descriptor set
+               	FD_ZERO(&fdsr);
+               	FD_SET(sockfd, &fdsr);
+
+              	// timeout setting
+               	tv.tv_sec = 2;
+               	tv.tv_usec = 0;
+
+                if(client_fd!=0)
+                FD_SET(client_fd, &fdsr);
+
+                printf("test max=%d \n",maxsock);
+               	ret = select(maxsock+1, &fdsr, NULL, NULL, &tv);
+
+
+                if (ret < 0) 
+                {
+               		perror("select");
+            		break;
+        	} 
+                else if (ret == 0) 
+                {
+            		printf("timeout\n");
+            		continue;
+        	}
+
+                printf("test0\n");
+
                 memset(buf,0,sizeof(buf));
+              
 
-                if((recvbytes=recv(client_fd,buf,100,0))== -1)
-                {
-                        perror("recv");
-                        exit(1);
+                if (FD_ISSET((client_fd), &fdsr)) 
+		{
+                        if(client_fd>0)                       
+                        {
+	              		if((recvbytes=recv(client_fd,buf,100,0))== -1)
+        	        	{
+                	        	perror("recv");
+                        		exit(1);
+                		}
+               		}
                 }
 
-                ROS_INFO("received a connection :%s number=%d \n",buf,recvbytes);
+               printf("test1 buf0==%d \n",buf[0]);
 
-                if(recvbytes==0)
-                {
-                       	if((client_fd=accept(sockfd,(struct sockaddr *)&client_sockaddr,&sin_size))==-1)
-                 	{
-                    		perror("accept");
-                		exit(1);
-        		} 
+               if (FD_ISSET(sockfd, &fdsr)) {
+
+               		client_fd = accept(sockfd, (struct sockaddr *)&client_sockaddr, &sin_size);
+
+               		if (client_fd <= 0) {
+               			perror("accept");
+                		continue;
+              		}
+ 
+                	maxsock = client_fd;            
                 }
+ 
+             
+
+//                ROS_INFO("received a connection :%s number=%d \n",buf,recvbytes);
 
                 command=atoi(buf);
 
+                if(command==0) 
+                continue; 
     
                 if(command==train_car)
                 {
                 	is_training_mode=true; 
+                        std::cout<<" training mode"<<std::endl; 
                 }
                 else if (command==test_car)
                 { 
                         is_testing_mode=true; 
+                        std::cout<<"testing mode" <<std::endl; 
                 }
                 else if(command==stop_do) 
                 {
                 	is_training_mode=false;
                         is_testing_mode= false;
+                        std::cout<<"step all mode!!!"<<std::endl; 
                 }
-            
-                control_car(command);
-                
+                else
+                {
+                        if(is_training_mode==true)
+                        training_car(command);
+                        else if(is_testing_mode==true)                        
+                        testing_car(command);
+                        else 
+                //        smooth_control(command);
+                     	control_car(command);
+                }
 	}  
 
 	close(sockfd);
