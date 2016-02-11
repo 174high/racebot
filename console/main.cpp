@@ -12,7 +12,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #define SERVPORT 3333
-#define MAXDATASIZE 1024
+#define MAXDATASIZE 20
 
 
 #define speed_level_1  0x02 
@@ -77,12 +77,13 @@ int main(int argc,char** argv)
 
     	while(1)
     	{
-                usleep(100000);                 
+                usleep(10000);                 
                
                 read(keys_fd,&t,sizeof(struct input_event));
 
                 if(t.type==1)
-                        printf("key %i state %i \n",t.code,t.value);
+                {
+                printf("key %i state %i \n",t.code,t.value);
 
                 if((run_forward==t.code)&&(botton_status_on==t.value))
                 {
@@ -131,14 +132,17 @@ int main(int argc,char** argv)
                 }
                 else if((((t.code>=speed_level_1)&&(t.code<=speed_level_10))&&(botton_status_on==t.value)))
                 {
-                        char buf[MAXDATASIZE]="1";
+                        printf("speed %d \n",t.code);      
+                        char buf[MAXDATASIZE]={0} ;
+                        sprintf(buf,"speed:%d",t.code);
                         if(send(sockfd,buf,strlen(buf),0)== -1)
                         {
                                 perror("send");
                                 exit(1);
                         }
 
-                        printf("send speed \n");
+                        printf("send speed %d \n",t.code);
+                }
                 }
 
     	}
