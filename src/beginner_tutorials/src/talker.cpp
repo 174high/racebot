@@ -53,6 +53,7 @@ std::vector<std::vector<car_info*> > train_car_info;
 
 struct car_ps_info
 {
+	std::string action_name; 
 	bool real_data; 
 	long long time_nsecs; 
 	float speed; 
@@ -62,6 +63,8 @@ struct car_ps_info
 
 std::vector<car_ps_info> train_ps_one_chain ;  
 std::vector<std::vector<car_ps_info> > train_ps_all_chain;  
+
+std::string namenow; 
 
 struct car_ps_info  (*train_ps_array_one)[1000]; 
 
@@ -106,7 +109,7 @@ bool is_testing_mode=false;
 
 std::ofstream outFile; 
 
-void store_data(char * action_name,bool overlap)
+void store_data_one(char * action_name,bool overlap,struct car_ps_info &data)
 {	
 
                  /* 1: create the database handle */
@@ -119,13 +122,8 @@ void store_data(char * action_name,bool overlap)
                 char *first_key = action_name;
                 u_int32_t key_len = (u_int32_t) strlen (first_key);
 
-//		struct car_ps_info  (*first_value)[1000]=&train_ps_array_one[0];
-//                u_int32_t value_len= (u_int32_t)sizeof(car_ps_info)*1000;
-
 		struct car_ps_info test; 
-		test.position=0.5;
-		test.speed=1000; 
-		struct car_ps_info *first_value=&test;
+		struct car_ps_info *first_value=&data;
 		u_int32_t value_len= (u_int32_t)sizeof(car_ps_info);
 
 		std::cout<<"value_len="<<value_len<<std::endl; 
@@ -154,7 +152,22 @@ void store_data(char * action_name,bool overlap)
 		//db.sync(0); 
 }
 
-void get_data(char * action_name)
+void store_data_one_group(void)
+{
+	std::cout<<__FUNCTION__<<"car info size="<<train_ps_one_chain.size()<<std::endl; 
+
+        std::vector<car_ps_info >::iterator it;
+
+        for(it=train_ps_one_chain.begin();it!=train_ps_one_chain.end();it++)
+        {
+		std::cout<<"stroe data name ="<<(*it).action_name<<std::endl ; 
+		store_data_one((char*)(*it).action_name.c_str(),false,(*it));
+	}
+
+	std::cout<<"@@@@@@data size="<<train_ps_one_chain.size()<<std::endl ;
+}
+
+bool  get_data(char * action_name,struct car_ps_info &car_ps_data)
 {
                  
                  /* 1: create the database handle */
@@ -175,15 +188,52 @@ void get_data(char * action_name)
 
 		std::cout<<"get db ret="<<ret<<std::endl; 
 
-		std::cout<<"####test datat#######"<<std::endl; 
+		if(ret==0)
+		{
+			std::cout<<"####test datat#######"<<std::endl; 
 
-                std::cout<<"1:get data position="<<((struct car_ps_info*)(stored_value.get_data()))->position<<std::endl;
-                std::cout<<"1:get data speed="<<((struct car_ps_info*)(stored_value.get_data()))->speed<<std::endl;		
+                	std::cout<<"1:get data position="<<((struct car_ps_info*)(stored_value.get_data()))->position<<std::endl;
+        	        std::cout<<"1:get data speed="<<((struct car_ps_info*)(stored_value.get_data()))->speed<<std::endl;		
+
+			car_ps_data=*((struct car_ps_info*)(stored_value.get_data()));
+
+			return true; 
+		}
+		else
+		{
+			return false; 
+		}
 
                 /* 7: close the database handle */
                 db.close(0);
 }
 
+void get_data_from_db(char * action_name)
+{
+		unsigned int i=1; 
+		train_ps_one_chain.clear();   // clear data 
+		
+		std::cout<<"get_data_from_db"<<std::endl; 
+
+		while(1)
+		{
+			car_ps_info one_ps_info;
+     			std::string get_action_name=action_name;
+			char buffer[10];
+                	sprintf(buffer,"size=%d",i++);
+                	get_action_name+=buffer;
+			if(get_data((char*)get_action_name.c_str(),one_ps_info)!=false)
+			{
+                		train_ps_one_chain.push_back(one_ps_info);	
+			}
+			else
+			{
+				break ;
+			}
+		}
+
+		std::cout<<"@@@@@@data size="<<train_ps_one_chain.size()<<std::endl ;
+}
 
 /**
 the control_car（）function is used to control  motion of car 
@@ -260,7 +310,12 @@ void control_car(int & command)
 			if(is_training_mode==true)
                         {
 		   		car_ps_info one_ps_info;
-                        	one_ps_info.real_data=true;
+				one_ps_info.action_name.clear(); 
+				one_ps_info.action_name+=namenow; 
+                        	char buffer[10];
+                      		sprintf(buffer,"size=%d",(train_ps_one_chain.size()+1));
+                        	one_ps_info.action_name+=buffer;
+			 	one_ps_info.real_data=true;
                         	one_ps_info.speed=msg_s->data;
                         	one_ps_info.position=msg_p->data;
                         	train_ps_one_chain.push_back(one_ps_info);
@@ -439,6 +494,11 @@ void timerCallback(const ros::TimerEvent &event)
         	{
         		std::cout<<"s: how many train ps now ="<<train_ps_one_chain.size()<<std::endl; 
 			car_ps_info one_ps_info; 
+			one_ps_info.action_name.clear();
+                        one_ps_info.action_name+=namenow;
+			char buffer[10];     
+			sprintf(buffer,"size=%d",(train_ps_one_chain.size()+1));    
+			one_ps_info.action_name+=buffer; 
         		one_ps_info.real_data=false; 
         		one_ps_info.speed=0;   
         		one_ps_info.position=0;
@@ -607,6 +667,8 @@ int main(int argc, char **argv)
                 {
                 	is_training_mode=true; 
  			is_testing_mode= false;
+			namenow.erase(); 
+			namenow+="test"; 
                         std::cout<<" training mode"<<std::endl; 
                 }
                 else if (command==test_car)
@@ -623,7 +685,8 @@ int main(int argc, char **argv)
                         std::cout<<"############ store data of training   ##########################"<<std::endl; 
 		        std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
 
-			store_data("test 1",false);
+			store_data_one_group(); 
+		//	store_data("test 1",false);
 		//	get_data("test 1"); 
 	
                         train_car_info.push_back(train_car_seq); 
@@ -642,7 +705,8 @@ int main(int argc, char **argv)
                         }
                         else if(is_testing_mode==true)                        
                         {
-	                        get_data("test 1");				
+	              ///          get_data("test 1");				
+				get_data_from_db("test");
 		//		testing_car();
 		           	test_train_data();
 			}
