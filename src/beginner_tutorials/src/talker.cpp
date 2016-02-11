@@ -206,7 +206,7 @@ void get_beginning_info(void)
 
 void testing_car(void)
 {
-        float duration=0;
+        long long  duration=0;
 
  	std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
         ros::spinOnce();
@@ -218,12 +218,10 @@ void testing_car(void)
         train_beginning_nsecs=train_car_seq[0]->nsecs;
         std::cout<<"get train beginning data"<<std::endl; 
 
-
-
        	for(it=train_car_seq.begin()+1;it!=train_car_seq.end();it++)
        	{
                 
-		std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
+//		std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
         	std::cout<<"distance="<<(*it)->distance<<std::endl;
         	std::cout<<"speed="<<(*it)->speed<<std::endl;
         	std::cout<<"seq="<<(*it)->seq<<std::endl;
@@ -231,6 +229,7 @@ void testing_car(void)
         	std::cout<<"secs="<<(*it)->secs<<std::endl;
         	std::cout<<"nsecs="<<(*it)->nsecs<<std::endl;
         	std::cout<<"command="<<(*it)->cmd<<std::endl;   
+                std::cout<<" "<<std::endl; 
 
                 duration=(*it)->secs-train_beginning_secs ;
 
