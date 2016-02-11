@@ -15,12 +15,38 @@
 #define MAX_CONNECTED_NO 10
 #define MAXDATASIZE 1024
 
+#define speed_level_1  0x02 
+#define speed_level_2  0x03   
+#define speed_level_3  0x04 
+#define speed_level_4  0x05
+#define speed_level_5  0x06 
+#define speed_level_6  0x07
+#define speed_level_7  0x08 
+#define speed_level_8  0x09
+#define speed_level_9  0x0a 
+#define speed_level_10 0x0b
+
+#define run_forward   103
+#define run_backward  108
+#define turn_left     105   
+#define turn_right    106
 
 int main(int argc, char **argv)  
 {  
+        int command=0;         
+        int direction=0;
+        float position=0.45;
+
 	ros::init(argc, argv, "talker");  
 
 	ros::NodeHandle n;  
+
+         /** 
+         * This is a message object. You stuff it with data, and then publish it. 
+         */
+
+        std_msgs::Float64::Ptr  msg_s(new std_msgs::Float64);
+        std_msgs::Float64::Ptr  msg_p(new std_msgs::Float64);
 
 	ros::Publisher speed_pub = n.advertise<std_msgs::Float64>("/vesc/commands/motor/speed", 10);  
         ros::Publisher position_pub = n.advertise<std_msgs::Float64>("/vesc/commands/servo/position", 10);
@@ -79,7 +105,6 @@ int main(int argc, char **argv)
 
         while (ros::ok())
         {
-                //µ÷ÓÃrecvº¯ÊýœÓÊÕ¿Í»§¶ËµÄÇëÇó
                 if((recvbytes=recv(client_fd,buf,100,0))== -1)
                 {
                         perror("recv");
@@ -94,14 +119,39 @@ int main(int argc, char **argv)
 //                        exit(1);
 //                }
 
-		/** 
-		 * This is a message object. You stuff it with data, and then publish it. 
-		 */  
-		std_msgs::Float64::Ptr  msg_s(new std_msgs::Float64);  
-        	std_msgs::Float64::Ptr  msg_p(new std_msgs::Float64);
+                command=atoi(buf);
+            
+                if(command==run_forward)
+                {
+                    direction=1; 
+                }
+                else if(command==run_backward)
+                { 
+                    direction=-1; 
+                } 
+                  
+               if(command==turn_right)
+                {
+                    if(position<=0.8)
+                    position+=0.15;
+                }
+                else if(command==turn_left)
+                {
+                    if(position>=0.1)
+                    position-=0.15;
+                }              
 
-		msg_s->data = 1200;  
-        	msg_p->data = 0.8;
+                if((command>=speed_level_1)&&(command<=speed_level_10))
+                {
+                      ROS_INFO("command=%d",command);
+                      msg_s->data=(1000+(2300/10)*command); 
+
+                }
+
+                if(msg_s->data*direction<0)
+                msg_s->data=msg_s->data*-1;                
+
+        	msg_p->data = position;
 
 		ROS_INFO("%g", msg_s->data);  
         	ROS_INFO("%g", msg_p->data);  
