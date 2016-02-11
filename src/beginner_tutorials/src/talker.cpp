@@ -1,4 +1,5 @@
 #include "ros/ros.h"  
+#include "sensor_msgs/LaserScan.h"
 #include "std_msgs/String.h"  
 #include  <std_msgs/Float64.h>
 #include <nav_msgs/Odometry.h>
@@ -21,6 +22,8 @@
 #define BACKLOG 10
 #define MAX_CONNECTED_NO 10
 #define MAXDATASIZE 1024
+
+#define RAD2DEG(x) ((x)*180./M_PI)
 
 #define speed_level_1  0x02 
 #define speed_level_2  0x03   
@@ -78,6 +81,7 @@ nav_msgs::Odometry      distance;
 ros::Publisher   speed_pub ;
 ros::Publisher   position_pub;
 ros::Subscriber  distance_sub;
+ros::Subscriber  scan_sub ;
 
 char buf[MAXDATASIZE]={0};
 
@@ -514,6 +518,18 @@ void timerCallback(const ros::TimerEvent &event)
         last_seq=train_ps_one_chain.size(); 
 }
 
+void scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
+{
+    int count = scan->scan_time / scan->time_increment;
+    ROS_INFO("I heard a laser scan %s[%d]:", scan->header.frame_id.c_str(), count);
+    ROS_INFO("angle_range, %f, %f", RAD2DEG(scan->angle_min), RAD2DEG(scan->angle_max));
+  
+    for(int i = 0; i < count; i++) {
+        float degree = RAD2DEG(scan->angle_min + scan->angle_increment * i);
+        ROS_INFO(": [%f, %f]", degree, scan->ranges[i]);
+    }
+}
+
 
 int main(int argc, char **argv)  
 {  
@@ -531,6 +547,7 @@ int main(int argc, char **argv)
 	speed_pub = n.advertise<std_msgs::Float64>("/vesc/commands/motor/speed", 10);  
         position_pub = n.advertise<std_msgs::Float64>("/vesc/commands/servo/position", 10);
         distance_sub = n.subscribe("/odom", 1, distanceCallback);        
+        scan_sub = n.subscribe<sensor_msgs::LaserScan>("/scan", 1000, scanCallback);
 
 	ros::Timer timer = n.createTimer(ros::Duration(0.1), timerCallback);
 
