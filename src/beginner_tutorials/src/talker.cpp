@@ -137,7 +137,7 @@ void control_car(int & command)
 
                 command=0;
 
-                ros::spinOnce();
+               // ros::spinOnce();
 
                 //loop_rate.sleep();
 
@@ -268,7 +268,7 @@ int main(int argc, char **argv)
 
        maxsock = sockfd;
 
-        printf("yyyy \n");
+        printf("before loop \n");
         while (ros::ok())
         {
 
@@ -277,13 +277,13 @@ int main(int argc, char **argv)
                	FD_SET(sockfd, &fdsr);
 
               	// timeout setting
-               	tv.tv_sec = 2;
+               	tv.tv_sec = 0;
                	tv.tv_usec = 0;
 
                 if(client_fd!=0)
                 FD_SET(client_fd, &fdsr);
 
-                printf("test max=%d \n",maxsock);
+               // printf("test max=%d \n",maxsock);
                	ret = select(maxsock+1, &fdsr, NULL, NULL, &tv);
 
 
@@ -294,11 +294,11 @@ int main(int argc, char **argv)
         	} 
                 else if (ret == 0) 
                 {
-            		printf("timeout\n");
-            		continue;
+            //		printf("timeout\n");
+           // 		continue;
         	}
 
-                printf("test0\n");
+           //     printf("test0\n");
 
                 memset(buf,0,sizeof(buf));
               
@@ -315,7 +315,7 @@ int main(int argc, char **argv)
                		}
                 }
 
-               printf("test1 buf0==%d \n",buf[0]);
+              // printf("test1 buf0==%d \n",buf[0]);
 
                if (FD_ISSET(sockfd, &fdsr)) {
 
@@ -335,6 +335,8 @@ int main(int argc, char **argv)
 
                 command=atoi(buf);
 
+                ros::spinOnce();
+
                 if(command==0) 
                 continue; 
     
@@ -352,7 +354,7 @@ int main(int argc, char **argv)
                 {
                 	is_training_mode=false;
                         is_testing_mode= false;
-                        std::cout<<"step all mode!!!"<<std::endl; 
+                        std::cout<<"stop all mode!!!"<<std::endl; 
                 }
                 else
                 {
@@ -364,6 +366,7 @@ int main(int argc, char **argv)
                 //        smooth_control(command);
                      	control_car(command);
                 }
+
 	}  
 
 	close(sockfd);
