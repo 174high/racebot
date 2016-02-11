@@ -77,7 +77,7 @@ int main(int argc, char **argv)
                 exit(1);
         }
 
-        while(1)
+        while (ros::ok())
         {
                 //µ÷ÓÃrecvº¯ÊýœÓÊÕ¿Í»§¶ËµÄÇëÇó
                 if((recvbytes=recv(client_fd,buf,100,0))== -1)
@@ -88,52 +88,41 @@ int main(int argc, char **argv)
 
                 ROS_INFO("received a connection :%s\n",buf);
 
-                if(send(client_fd,buf,strlen(buf),0)== -1)
-                {
-                        perror("send");
-                        exit(1);
-                }
+//                if(send(client_fd,buf,strlen(buf),0)== -1)
+//                {
+//                        perror("send");
+//                        exit(1);
+//                }
 
-        }
+		/** 
+		 * This is a message object. You stuff it with data, and then publish it. 
+		 */  
+		std_msgs::Float64::Ptr  msg_s(new std_msgs::Float64);  
+        	std_msgs::Float64::Ptr  msg_p(new std_msgs::Float64);
 
-        close(sockfd);
+		msg_s->data = 1200;  
+        	msg_p->data = 0.8;
 
-	/** 
-	* A count of how many messages we have sent. This is used to create 
-	* a unique string for each message. 
-	*/  
-	int count = 0;  
-	while (ros::ok())  
-	{  
-	/** 
-	 * This is a message object. You stuff it with data, and then publish it. 
-	 */  
-	std_msgs::Float64::Ptr  msg_s(new std_msgs::Float64);  
-        std_msgs::Float64::Ptr  msg_p(new std_msgs::Float64);
+		ROS_INFO("%g", msg_s->data);  
+        	ROS_INFO("%g", msg_p->data);  
 
-//	std::stringstream ss;  
-//	ss << 100 << count;  
-	msg_s->data = 1200;  
-        msg_p->data = 0.8;
+		/** 
+	 	* The publish() function is how you send messages. The parameter 
+	 	* is the message object. The type of this object must agree with the type 
+	 	* given as a template parameter to the advertise<>() call, as was done 
+	 	* in the constructor above. 
+	 	*/  
+		speed_pub.publish(msg_s);  
+        	position_pub.publish(msg_p);
 
-	ROS_INFO("%g", msg_s->data);  
-        ROS_INFO("%g", msg_p->data);  
+		ros::spinOnce();  
 
-	/** 
-	 * The publish() function is how you send messages. The parameter 
-	 * is the message object. The type of this object must agree with the type 
-	 * given as a template parameter to the advertise<>() call, as was done 
-	 * in the constructor above. 
-	 */  
-	speed_pub.publish(msg_s);  
-        position_pub.publish(msg_p);
-
-	ros::spinOnce();  
-
-	loop_rate.sleep();  
-	++count;  
+		loop_rate.sleep();  
+ 
+                memset(buf,0,sizeof(buf));
 	}  
 
+	close(sockfd);
 
 	return 0;  
 }  
