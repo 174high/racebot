@@ -2,6 +2,7 @@
 #include "std_msgs/String.h"  
 #include  <std_msgs/Float64.h>
 #include <nav_msgs/Odometry.h>
+#include "car_info.h"
 
 #include <sstream>  
 
@@ -41,6 +42,9 @@
 
 int sockfd;
 
+std::vector<car_info*> train_car_seq; 
+ 
+
 //ros::init(argc, argv, "talker");
 //ros::Rate loop_rate(10);
 
@@ -57,6 +61,13 @@ char buf[MAXDATASIZE]={0};
 int command=0;
 int direction=0;
 float position=0.43;
+
+float current_speed=0; 
+float current_distance=0; 
+long long current_seq=0;
+long long current_secs=0;
+long long current_nsecs=0; 
+ros::Time current_stamp; 
 
 bool is_training_mode=false ; 
 bool is_testing_mode=false; 
@@ -147,13 +158,51 @@ void control_car(int & command)
 
 void training_car(int & command)
 {
+        car_info *my_car=new car_info() ;  
+        my_car->distance=current_distance; 
+        my_car->speed=current_speed;
+        my_car->seq=current_seq; 
+        my_car->stamp=current_stamp; 
+        my_car->secs=current_secs; 
+        my_car->nsecs=current_nsecs; 
+        my_car->cmd=command; 
+        train_car_seq.push_back(my_car);        
 
+        std::cout<<"training car num="<<train_car_seq.size()<<std::endl ; 
+        std::cout<<"distance="<<my_car->distance<<std::endl; 
+        std::cout<<"speed="<<my_car->speed<<std::endl;      
+        std::cout<<"seq="<<my_car->seq<<std::endl; 
+        std::cout<<"stamp="<<my_car->stamp<<std::endl; 
+        std::cout<<"secs="<<my_car->secs<<std::endl; 
+        std::cout<<"nsecs="<<my_car->nsecs<<std::endl; 
+        std::cout<<"command="<<my_car->cmd<<std::endl; 
+
+	control_car(command);
 
 }
 
-void testing_car(int & command)
+void testing_car(void)
 {
 
+ 	std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
+
+       	std::vector<car_info *>::iterator it;
+
+       	for(it=train_car_seq.begin();it!=train_car_seq.end();it++)
+       	{
+		std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
+        	std::cout<<"distance="<<(*it)->distance<<std::endl;
+        	std::cout<<"speed="<<(*it)->speed<<std::endl;
+        	std::cout<<"seq="<<(*it)->seq<<std::endl;
+         	std::cout<<"stamp="<<(*it)->stamp<<std::endl;
+        	std::cout<<"secs="<<(*it)->secs<<std::endl;
+        	std::cout<<"nsecs="<<(*it)->nsecs<<std::endl;
+        	std::cout<<"command="<<(*it)->cmd<<std::endl;   
+                control_car((*it)->cmd);
+                usleep(1000000); 
+    	 }
+
+         std::cout<<"###### END ######"<<std::endl; 
 
 }
 
@@ -187,9 +236,17 @@ void smooth_control(int &command)
 void distanceCallback(const nav_msgs::OdometryConstPtr &msg)
 {
 	distance=*msg; 
-        std::cout<<" get odom data!!!"<<std::endl; 
-        std::cout<<" distance x="<<distance.pose.pose.position.x<<std::endl ;  
-        std::cout<<" speed= "<<distance.twist.twist.linear.x<<std::endl ;
+//        std::cout<<" get odom data!!!"<<std::endl; 
+//        std::cout<<" distance x="<<distance.pose.pose.position.x<<std::endl ;  
+//        std::cout<<" speed= "<<distance.twist.twist.linear.x<<std::endl ;
+
+        current_seq=distance.header.seq; 
+        current_secs=distance.header.stamp.toSec();; 
+        current_nsecs=distance.header.stamp.toNSec(); 
+        current_stamp=distance.header.stamp;
+        current_distance=distance.pose.pose.position.x; 
+        current_speed=distance.twist.twist.linear.x; 
+
 
 }
 
@@ -343,11 +400,13 @@ int main(int argc, char **argv)
                 if(command==train_car)
                 {
                 	is_training_mode=true; 
+ 			is_testing_mode= false;
                         std::cout<<" training mode"<<std::endl; 
                 }
                 else if (command==test_car)
                 { 
-                        is_testing_mode=true; 
+                        is_testing_mode=true;
+                        is_training_mode=false;                       
                         std::cout<<"testing mode" <<std::endl; 
                 }
                 else if(command==stop_do) 
@@ -361,7 +420,7 @@ int main(int argc, char **argv)
                         if(is_training_mode==true)
                         training_car(command);
                         else if(is_testing_mode==true)                        
-                        testing_car(command);
+                        testing_car();
                         else 
                 //        smooth_control(command);
                      	control_car(command);
