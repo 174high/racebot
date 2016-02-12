@@ -55,8 +55,8 @@ int main()
 
 	//memset(&client_sockaddr, 0, sizeof(struct sockaddr_in));
 
-	//sin_size = 1;
-    printf("sin_size=%d\n",sin_size);
+	sin_size = 1;
+        printf("sin_size=%d\n",sin_size);
 
 	if((client_fd=accept(sockfd,(struct sockaddr *)&client_sockaddr,&sin_size))==-1)
 	{
