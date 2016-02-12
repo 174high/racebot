@@ -62,6 +62,18 @@ int command=0;
 int direction=0;
 float position=0.43;
 
+float beginning_distance=0;
+float beginning_speed=0;
+long long beginning_seq=0;
+long long beginning_secs=0;
+long long beginning_nsecs=0; 
+
+long long train_beginning_secs=0;
+long long train_beginning_nsecs=0; 
+
+ros::Time beginning_stampp ;
+
+
 float current_speed=0; 
 float current_distance=0; 
 long long current_seq=0;
@@ -181,15 +193,36 @@ void training_car(int & command)
 
 }
 
+void get_beginning_info(void)
+{
+	beginning_distance=current_distance;
+        beginning_speed=current_speed;
+        beginning_seq=current_seq;
+        //beginning_stamp=current_stamp; 
+        beginning_secs=current_secs; 
+        beginning_nsecs=current_nsecs; 
+}
+
+
 void testing_car(void)
 {
+        float duration=0;
 
  	std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
+        ros::spinOnce();
+        get_beginning_info(); 
 
        	std::vector<car_info *>::iterator it;
 
-       	for(it=train_car_seq.begin();it!=train_car_seq.end();it++)
+        train_beginning_secs=train_car_seq[0]->secs;
+        train_beginning_nsecs=train_car_seq[0]->nsecs;
+        std::cout<<"get train beginning data"<<std::endl; 
+
+
+
+       	for(it=train_car_seq.begin()+1;it!=train_car_seq.end();it++)
        	{
+                
 		std::cout<<"testing car num="<<train_car_seq.size()<<std::endl ;
         	std::cout<<"distance="<<(*it)->distance<<std::endl;
         	std::cout<<"speed="<<(*it)->speed<<std::endl;
@@ -198,8 +231,17 @@ void testing_car(void)
         	std::cout<<"secs="<<(*it)->secs<<std::endl;
         	std::cout<<"nsecs="<<(*it)->nsecs<<std::endl;
         	std::cout<<"command="<<(*it)->cmd<<std::endl;   
+
+                duration=(*it)->secs-train_beginning_secs ;
+
+                while(current_secs-beginning_secs<duration)
+                          ros::spinOnce();
+  
                 control_car((*it)->cmd);
-                usleep(1000000); 
+                ros::spinOnce();
+
+
+
     	 }
 
          std::cout<<"###### END ######"<<std::endl; 
