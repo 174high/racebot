@@ -1,0 +1,31 @@
+
+
+首先下载Berkeley DB软件包
+http://download.oracle.com/berkeley-db/db-4.7.25.NC.tar.gz
+
+下载完后，对其进行解压：
+$ tar zxvf db-4.7.25.NC.tar.gz 
+
+然后进入其build_unix目录，输入命令：
+$ ../dist/configure
+
+issue:
+checking build system type... posix/config.guess: unable to guess system type
+
+This script, last modified 2006-07-02, has failed to recognize
+the operating system you are using. It is advised that you
+
+solution: 
+:  /usr/share/misc/config.guess
+:   aarch64-unknown-linux-gnu  
+
+:../dist/configure --build=aarch64-unknown-linux-gnu 
+
+sudo apt-get install libdb++-dev
+
+检查系统环境并产生编译程序所需的文件
+
+接着就可以:
+$ make
+$ sudo make install
+

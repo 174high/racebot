@@ -106,18 +106,43 @@ std::ofstream outFile;
 
 void store_data(void)
 {	
+		for(int i=0;i<5;i++)
+		{  
+           		std::cout<<"s: how many train ps now ="<<train_ps_one_chain.size()<<std::endl;
+                	car_ps_info one_ps_info;
+                	one_ps_info.real_data=false;
+                	one_ps_info.speed=0;
+                	one_ps_info.position=0;
+                	train_ps_one_chain.push_back(one_ps_info);
+                	std::cout<<"e: how many train ps now ="<<train_ps_one_chain.size()<<std::endl;
+		}
+
+/*
+
+ 	       car_ps_info one_ps_info;
+               one_ps_info.real_data=false;
+               one_ps_info.speed=900;
+               one_ps_info.position=0.5;
+*/
+
                  /* 1: create the database handle */
                 Db db (0, 0);
 
                 /* 2: open the database using the handle */
-                db.open (NULL, "./chap4_db", NULL, DB_BTREE, DB_CREATE, 0644);
+                db.open (NULL, "./apollo_db", NULL, DB_BTREE, DB_CREATE, 0644);
 
                 /* 3: create the key and value Dbts */
-                char *first_key = "first_record";
+                char *first_key = "test 1";
                 u_int32_t key_len = (u_int32_t) strlen (first_key);
 
-                char * first_value = "Hello World - Berkeley DB style!!";
-                u_int32_t value_len = (u_int32_t) strlen (first_value);
+
+                //car_ps_info* first_value=&one_ps_info; 
+                //u_int32_t value_len= (u_int32_t)sizeof(one_ps_info);
+//                char * first_value = "Hello World - Berkeley DB style!!";		
+//                u_int32_t value_len = (u_int32_t) strlen (first_value);
+		std::vector<car_ps_info> * first_value=&train_ps_one_chain;
+                u_int32_t value_len= (u_int32_t)sizeof(train_ps_one_chain);
+
 
                 Dbt key (first_key, key_len + 1);
                 Dbt value (first_value, value_len + 1);
@@ -135,8 +160,13 @@ void store_data(void)
                 Dbt stored_value;
                 ret = db.get (0, &key, &stored_value, 0);
 
+		std::cout<<" size="<<((std::vector<car_ps_info>*)(stored_value.get_data()))->size()<<std::endl; 
+
+//		std::cout<<"speed="<<((std::vector<car_ps_info>*)(stored_value.get_data()))<<std::endl; 
+//                std::cout<<"position="<<((std::vector<car_ps_info>*)(stored_value.get_data()))<<std::endl;
+
                 /* 6: print the value read from the database */
-                std::cout << (char *) stored_value.get_data () << std::endl;
+               // std::cout << (char *) stored_value.get_data () << std::endl;
 
                 /* 7: close the database handle */
                 db.close (0);
