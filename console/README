@@ -5,3 +5,17 @@ gcc key.cpp -o test -lstdc++
 2.test key process
 
 sudo ./test /dev/input/event2
+
+3.to build net_host.cpp and net_client.cpp 
+
+gcc net_host.cpp host 
+
+gcc net_clent.cpp client 
+
+./host  
+
+./clent  ip (eg. 192.168.0.105) 
+
+
+
+
