@@ -1,0 +1,7 @@
+1.to build the key.cpp 
+
+gcc key.cpp -o test -lstdc++
+
+2.test key process
+
+sudo ./test /dev/input/event2
