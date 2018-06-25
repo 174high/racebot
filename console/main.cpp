@@ -40,7 +40,6 @@ int main(int argc,char** argv)
     	char ret[2];
     	struct input_event t;
     	int sockfd,sendbytes;
-    	char buf[MAXDATASIZE]={0};
     	struct hostent *host;
     	struct sockaddr_in serv_addr;
 
@@ -78,36 +77,95 @@ int main(int argc,char** argv)
 
     	while(1)
     	{
+                usleep(100000);                 
+               
                 read(keys_fd,&t,sizeof(struct input_event));
+
                 if(t.type==1)
                         printf("key %i state %i \n",t.code,t.value);
 
-                while(((run_forward==t.code)||(run_backward==t.code)||\
-                (turn_left==t.code)||(turn_right==t.code))&&\
-                (botton_status_on==t.value)) 
-                {  
-                    printf("test\n");
+                if((run_forward==t.code)&&(botton_status_on==t.value))
+                {
+                        t.code=0;
+                        char buf[MAXDATASIZE]="forward";
+                	if(send(sockfd,buf,strlen(buf),0)== -1)
+              		{
+             	        	perror("send");
+             		        exit(1);
+             		}
 
-                    read(keys_fd,&t,sizeof(struct input_event));
-                    if(t.type==1)
-                    	printf("key %i state %i \n",t.code,t.value);   
+                        printf("send forward\n");
+                }
+                else if((run_backward==t.code)&&(botton_status_on==t.value))                                             {      
+                        
+                        char buf[MAXDATASIZE]="backward";
+                        if(send(sockfd,buf,strlen(buf),0)== -1)
+                        {
+                                perror("send");
+                                exit(1);
+                        }
 
-                    while(((run_forward==t.code)||(run_backward==t.code)||\
-                    (turn_left==t.code)||(turn_right==t.code))&&\
-                    (botton_status_on==t.value))
-                    {     
+                        printf("send backward\n");
 
+                }
+                else if((turn_left==t.code)&&(botton_status_on==t.value))                                                {
+                      char buf[MAXDATASIZE]="turn_left";
+                        if(send(sockfd,buf,strlen(buf),0)== -1)
+                        {
+                                perror("send");
+                                exit(1);
+                        }
 
-                    }
-                                               
-              //  if(send(sockfd,buf,strlen(buf),0)== -1)
-              //  {
-              //          perror("send");
-             //           exit(1);
-             //   }
+                        printf("send turn left \n");
+                }
+                else if((turn_right==t.code)&&(botton_status_on==t.value))                                               {
+                        char buf[MAXDATASIZE]="turn_right";
+                        if(send(sockfd,buf,strlen(buf),0)== -1)
+                        {
+                                perror("send");
+                                exit(1);
+                        }
+
+                        printf("send turn right \n");
+
+                }
+                else if((((t.code>=speed_level_1)&&(t.code<=speed_level_10))&&(botton_status_on==t.value)))
+                {
+                        char buf[MAXDATASIZE]="1";
+                        if(send(sockfd,buf,strlen(buf),0)== -1)
+                        {
+                                perror("send");
+                                exit(1);
+                        }
+
+                        printf("send speed \n");
+                }
+
     	}
 
     	close(keys_fd);
     	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
