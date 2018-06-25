@@ -35,7 +35,8 @@ int main(int argc, char **argv)
 {  
         int command=0;         
         int direction=0;
-        float position=0.45;
+        float position=0.43;
+        int reuse = 0;
 
 	ros::init(argc, argv, "talker");  
 
@@ -67,6 +68,12 @@ int main(int argc, char **argv)
                 perror("socket");
                 exit(1);
         }
+
+       if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0)
+       {
+                perror("setsockopet error\n");
+                return -1;
+       }
 
         printf("socket success!,sockfd=%d\n",sockfd);
         //ÉèÖÃsockaddr_in œá¹¹ÌåÖÐÏà¹Ø²ÎÊý
@@ -111,7 +118,16 @@ int main(int argc, char **argv)
                         exit(1);
                 }
 
-                ROS_INFO("received a connection :%s\n",buf);
+                ROS_INFO("received a connection :%s number=%d \n",buf,recvbytes);
+
+                if(recvbytes==0)
+                {
+                       	if((client_fd=accept(sockfd,(struct sockaddr *)&client_sockaddr,&sin_size))==-1)
+                 	{
+                    		perror("accept");
+                		exit(1);
+        		} 
+                }
 
 //                if(send(client_fd,buf,strlen(buf),0)== -1)
 //                {
@@ -144,7 +160,7 @@ int main(int argc, char **argv)
                 if((command>=speed_level_1)&&(command<=speed_level_10))
                 {
                       ROS_INFO("command=%d",command);
-                      msg_s->data=(1000+(2300/10)*command); 
+                      msg_s->data=(1000+(2250/10)*command); 
 
                 }
 
@@ -162,8 +178,16 @@ int main(int argc, char **argv)
 	 	* given as a template parameter to the advertise<>() call, as was done 
 	 	* in the constructor above. 
 	 	*/  
-		speed_pub.publish(msg_s);  
-        	position_pub.publish(msg_p);
+                
+                if(command!=0)
+                {
+                        
+			speed_pub.publish(msg_s);  
+
+        		position_pub.publish(msg_p);
+                } 
+              
+                command=0;
 
 		ros::spinOnce();  
 
