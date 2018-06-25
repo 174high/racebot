@@ -31,8 +31,9 @@
 #define turn_left     105   
 #define turn_right    106
 
-#define botton_status_on  2 
-#define botton_status_off 0  
+#define botton_status_on     2 
+#define botton_status_click  1
+#define botton_status_off    0  
 
 int main(int argc,char** argv)
 {
@@ -42,7 +43,8 @@ int main(int argc,char** argv)
     	int sockfd,sendbytes;
     	struct hostent *host;
     	struct sockaddr_in serv_addr;
-
+        int last_code=0; 
+ 
 
 	if((host=gethostbyname("192.168.0.108"))==NULL){
         	perror("gethostbyname");
@@ -77,7 +79,6 @@ int main(int argc,char** argv)
 
     	while(1)
     	{
-                usleep(10000);                 
                
                 read(keys_fd,&t,sizeof(struct input_event));
 
@@ -85,10 +86,16 @@ int main(int argc,char** argv)
                 {
 		        printf("key %i state %i \n",t.code,t.value);
 
-		        if((run_forward==t.code)&&(botton_status_on==t.value))
+                        if(last_code==t.code)
+                        {	
+                            t.code=0; 
+                            last_code=0; 
+                        }
+
+		        if((run_forward==t.code)&&(botton_status_off!=t.value))
 		        {
 		                char buf[MAXDATASIZE]={0};
-		                sprintf(buf,"command:%d",t.code);
+		                sprintf(buf,"%d\n",t.code);
 		        	if(send(sockfd,buf,strlen(buf),0)== -1)
 		      		{
 		     	        	perror("send");
@@ -97,10 +104,10 @@ int main(int argc,char** argv)
 
 		                printf("send forward\n");
 		        }
-		        else if((run_backward==t.code)&&(botton_status_on==t.value))                                             {      
+		        else if((run_backward==t.code)&&(botton_status_off!=t.value))                                             {      
 		                
 		                char buf[MAXDATASIZE]={0};
-		                sprintf(buf,"command:%d",t.code);
+		                sprintf(buf,"%d\0",t.code);
 		                if(send(sockfd,buf,strlen(buf),0)== -1)
 		                {
 		                        perror("send");
@@ -110,10 +117,10 @@ int main(int argc,char** argv)
 		                printf("send backward\n");
 
 		        }
-		        else if((turn_left==t.code)&&(botton_status_on==t.value))                                                {
+		        else if((turn_left==t.code)&&(botton_status_off!=t.value))                                                {
 	  
 		                char buf[MAXDATASIZE]={0};
-		                sprintf(buf,"command:%d",t.code);
+		                sprintf(buf,"%d\0",t.code);
 		                if(send(sockfd,buf,strlen(buf),0)== -1)
 		                {
 		                        perror("send");
@@ -122,10 +129,10 @@ int main(int argc,char** argv)
 
 		                printf("send turn left \n");
 		        }
-		        else if((turn_right==t.code)&&(botton_status_on==t.value))                                               {
+		        else if((turn_right==t.code)&&(botton_status_off!=t.value))                                               {
 
 		                char buf[MAXDATASIZE]={0};
-		                sprintf(buf,"command:%d",t.code);
+		                sprintf(buf,"%d\0",t.code);
 		                if(send(sockfd,buf,strlen(buf),0)== -1)
 		                {
 		                        perror("send");
@@ -135,11 +142,11 @@ int main(int argc,char** argv)
 		                printf("send turn right \n");
 
 		        }
-		        else if((((t.code>=speed_level_1)&&(t.code<=speed_level_10))&&(botton_status_on==t.value)))
+		        else if((((t.code>=speed_level_1)&&(t.code<=speed_level_10))&&(botton_status_off!=t.value)))
 		        {
 		                printf("speed %d \n",t.code);      
 		                char buf[MAXDATASIZE]={0} ;
-		                sprintf(buf,"%d",t.code);
+		                sprintf(buf,"%d\0",t.code);
 		                if(send(sockfd,buf,strlen(buf),0)== -1)
 		                {
 		                        perror("send");
@@ -148,6 +155,8 @@ int main(int argc,char** argv)
 
 		                printf("send speed %d \n",t.code);
 		        }
+                         
+                        last_code=t.code;
                 }
 
     	}
