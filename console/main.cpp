@@ -35,6 +35,8 @@
 #define botton_status_click  1
 #define botton_status_off    0  
 
+#define kill_car  37
+
 int main(int argc,char** argv)
 {
     	int keys_fd;
@@ -155,7 +157,18 @@ int main(int argc,char** argv)
 
 		                printf("send speed %d \n",t.code);
 		        }
-                         
+                        else if((t.code==kill_car)&&(botton_status_off!=t.value))
+                        {
+                                char buf[MAXDATASIZE]={0} ;
+                                sprintf(buf,"%d\0",t.code);
+                                if(send(sockfd,buf,strlen(buf),0)== -1)
+                                {
+                                        perror("send");
+                                        exit(1);
+                                }
+
+                                printf("kill car %d \n",t.code);
+                        }                         
                         last_code=t.code;
                 }
 
