@@ -36,6 +36,7 @@
 #define botton_status_off    0  
 
 #define kill_car  37
+#define stop_car  25
 
 int main(int argc,char** argv)
 {
@@ -48,7 +49,7 @@ int main(int argc,char** argv)
         int last_code=0; 
  
 
-	if((host=gethostbyname("192.168.0.108"))==NULL){
+	if((host=gethostbyname("192.168.0.107"))==NULL){
         	perror("gethostbyname");
         	exit(1);
     	}
@@ -168,7 +169,20 @@ int main(int argc,char** argv)
                                 }
 
                                 printf("kill car %d \n",t.code);
-                        }                         
+                                exit(1);
+                        }     
+                        else if((t.code==stop_car)&&(botton_status_off!=t.value))       
+                        {
+                              char buf[MAXDATASIZE]={0} ;
+                                sprintf(buf,"%d\0",stop_car);
+                                if(send(sockfd,buf,strlen(buf),0)== -1)
+                                {
+                                        perror("send");
+                                        exit(1);
+                                }
+
+                                printf("stop car %d \n",t.code);
+                        }               
                         last_code=t.code;
                 }
 
