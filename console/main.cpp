@@ -38,6 +38,9 @@
 #define kill_car  37
 #define stop_car  25
 
+#define train_car 44
+#define test_car  50
+
 int main(int argc,char** argv)
 {
     	int keys_fd;
@@ -47,9 +50,11 @@ int main(int argc,char** argv)
     	struct hostent *host;
     	struct sockaddr_in serv_addr;
         int last_code=0; 
- 
 
-	if((host=gethostbyname("192.168.0.107"))==NULL){
+        bool is_training=false;
+        bool is_testing=false;  
+
+	if((host=gethostbyname("192.168.0.108"))==NULL){
         	perror("gethostbyname");
         	exit(1);
     	}
@@ -85,7 +90,7 @@ int main(int argc,char** argv)
                
                 read(keys_fd,&t,sizeof(struct input_event));
 
-                if(t.type==1)
+                if((t.type==1)&&(botton_status_off!=t.value))
                 {
 		        printf("key %i state %i \n",t.code,t.value);
 
@@ -95,7 +100,9 @@ int main(int argc,char** argv)
                             last_code=0; 
                         }
 
-		        if((run_forward==t.code)&&(botton_status_off!=t.value))
+                        printf("key %i state %i \n",t.code,t.value);
+
+		        if(run_forward==t.code)
 		        {
 		                char buf[MAXDATASIZE]={0};
 		                sprintf(buf,"%d\n",t.code);
@@ -107,8 +114,7 @@ int main(int argc,char** argv)
 
 		                printf("send forward\n");
 		        }
-		        else if((run_backward==t.code)&&(botton_status_off!=t.value))                                             {      
-		                
+		        else if(run_backward==t.code)                                                                {  
 		                char buf[MAXDATASIZE]={0};
 		                sprintf(buf,"%d\0",t.code);
 		                if(send(sockfd,buf,strlen(buf),0)== -1)
@@ -120,7 +126,8 @@ int main(int argc,char** argv)
 		                printf("send backward\n");
 
 		        }
-		        else if((turn_left==t.code)&&(botton_status_off!=t.value))                                                {
+		        else if(turn_left==t.code) 
+                        {
 	  
 		                char buf[MAXDATASIZE]={0};
 		                sprintf(buf,"%d\0",t.code);
@@ -132,8 +139,7 @@ int main(int argc,char** argv)
 
 		                printf("send turn left \n");
 		        }
-		        else if((turn_right==t.code)&&(botton_status_off!=t.value))                                               {
-
+		        else if(turn_right==t.code)                                                                  {
 		                char buf[MAXDATASIZE]={0};
 		                sprintf(buf,"%d\0",t.code);
 		                if(send(sockfd,buf,strlen(buf),0)== -1)
@@ -145,7 +151,7 @@ int main(int argc,char** argv)
 		                printf("send turn right \n");
 
 		        }
-		        else if((((t.code>=speed_level_1)&&(t.code<=speed_level_10))&&(botton_status_off!=t.value)))
+		        else if((t.code>=speed_level_1)&&(t.code<=speed_level_10))
 		        {
 		                printf("speed %d \n",t.code);      
 		                char buf[MAXDATASIZE]={0} ;
@@ -158,7 +164,7 @@ int main(int argc,char** argv)
 
 		                printf("send speed %d \n",t.code);
 		        }
-                        else if((t.code==kill_car)&&(botton_status_off!=t.value))
+                        else if(t.code==kill_car)
                         {
                                 char buf[MAXDATASIZE]={0} ;
                                 sprintf(buf,"%d\0",t.code);
@@ -171,10 +177,10 @@ int main(int argc,char** argv)
                                 printf("kill car %d \n",t.code);
                                 exit(1);
                         }     
-                        else if((t.code==stop_car)&&(botton_status_off!=t.value))       
+                        else if(t.code==stop_car)       
                         {
                               char buf[MAXDATASIZE]={0} ;
-                                sprintf(buf,"%d\0",stop_car);
+                                sprintf(buf,"%d\0",t.code);
                                 if(send(sockfd,buf,strlen(buf),0)== -1)
                                 {
                                         perror("send");
@@ -182,7 +188,56 @@ int main(int argc,char** argv)
                                 }
 
                                 printf("stop car %d \n",t.code);
-                        }               
+                        }    
+                        else if(t.code==train_car)
+                        {
+   				if(is_training==false)
+                                {
+                                	is_training=true;
+                                }
+                                else
+                                {
+                                        is_training=false;
+                                }
+
+                                  
+                                char buf[MAXDATASIZE]={0} ;
+                                if(is_training==true)
+                                sprintf(buf,"%d\0",t.code);
+                                else                                 
+                                sprintf(buf,"%d\0",0xff);                                
+
+                                if(send(sockfd,buf,strlen(buf),0)== -1)
+                                {
+                                        perror("send");
+                                        exit(1);
+                                }
+
+                                printf("start training car %s %d \n",buf,is_training);                                                           }
+                         else if(t.code==test_car)
+                         {
+                               if(is_testing==false)
+                                {
+                                        is_testing=true;
+                                }
+                                else
+                                {
+                                        is_testing=false;
+                                }
+                                char buf[MAXDATASIZE]={0} ;
+                                if(is_testing==true)
+                                sprintf(buf,"%d\0",t.code);
+                                else
+                                sprintf(buf,"%d\0",0xff);
+                                if(send(sockfd,buf,strlen(buf),0)== -1)
+                                {
+                                        perror("send");
+                                        exit(1);
+                                }
+
+                                printf("start testing car %s  %d\n",t.code,is_testing);
+                         }
+                       
                         last_code=t.code;
                 }
 
