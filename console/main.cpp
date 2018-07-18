@@ -235,7 +235,8 @@ int main(int argc,char** argv)
                                         exit(1);
                                 }
 
-                                printf("start testing car %s  %d\n",t.code,is_testing);
+                                printf("start testing car %s  %d\n",buf,is_testing);
+
                          }
                        
                         last_code=t.code;
